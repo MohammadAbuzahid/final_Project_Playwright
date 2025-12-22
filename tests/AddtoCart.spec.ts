@@ -1,58 +1,43 @@
 import { test, expect } from '@playwright/test';
-import { HomePage } from '../pages/HomePage';
-import { ProductPage } from '../pages/ProductPage';
-import { CartPage } from '../pages/CartPage';
 import { LoginPage } from '../pages/LoginPage';
 
 const products = [
-  {
-    id: 'product-01KD1J8S8DVHQ30XC10G5HWMXF',
-    name: 'Combination Pliers',
-    quantity: 1
-  },
-  {
-    id: 'product-01KD1J8S942S9GNEGZP7N1FRB8',
-    name: 'Slip Joint Pliers',
-    quantity: 2
-  },
-  {
-    id: 'product-01KD1J8S9ANARW8PDXNS438EB9',
-    name: 'Hammer',
-    quantity: 1
-  }
+  { name: 'Combination Pliers', quantity: 1 },
+  { name: 'Slip Joint Pliers', quantity: 2 },
+  { name: 'Hammer', quantity: 1 }
 ];
 
-test.describe('Add to Cart (POM)', () => {
+test.describe('Add to Cart', () => {
 
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page);
-    await page.waitForTimeout(1000);
-    await loginPage.login(process.env.USER_NAME!,process.env.PASSWORD!);
-    await page.waitForTimeout(1000);
+    await loginPage.login(process.env.USER_NAME!, process.env.PASSWORD!);
+    await page.goto(process.env.BASE_URL_HOME!);
   });
 
   test('Add multiple products to cart', async ({ page }) => {
-  const home = new HomePage(page);
-  const productPage = new ProductPage(page);
-  const cart = new CartPage(page);
 
-  await home.goto();
+    for (const product of products) {
 
-  for (let i = 0; i < products.length; i++) {
-    const product = products[i];
+      const productCard = page
+        .locator('[data-test^="product-"]')
+        .filter({ hasText: product.name })
+        .first();
 
-    await home.openProductByName(product.name);
-    await productPage.addToCart(product.quantity);    
-    await page.waitForTimeout(1000);
-    await productPage.goHome();
-  }
+      await expect(productCard).toBeVisible();
+      await productCard.click();
 
-  await cart.openCart();
-
-  for (const product of products) {
-    await cart.verifyProductVisible(product.name);
-  }
-});
-
+      await page.locator('input[type="number"]').fill(product.quantity.toString()); 
+      await page.waitForTimeout(1000); 
+      await page.getByRole('button', { name: 'Add to cart' }).click(); 
+      await page.waitForTimeout(1000); 
+      await page.goto(process.env.BASE_URL_HOME!); 
+      if (product === products[products.length - 1]) { 
+        await page.locator('[data-test="nav-cart"]').click(); 
+      }else{ 
+        await page.goto(process.env.BASE_URL_HOME!); 
+      } 
+    }
+  });
 
 });

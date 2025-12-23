@@ -1,7 +1,10 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
+import { Filters } from './components/Filters';
+
 
 export class ProductsPage {
   readonly page: Page;
+  readonly filters: Filters;
 
   readonly sortSelect: Locator;
   readonly productNames: Locator;
@@ -11,6 +14,7 @@ export class ProductsPage {
 
   constructor(page: Page) {
     this.page = page;
+    this.filters = new Filters(page);
     this.searchInput = page.getByPlaceholder('Search');
 
     // Sort dropdown 
@@ -19,18 +23,40 @@ export class ProductsPage {
     // Products
     this.productNames = page.locator('.card-title');
     this.productPrices = page.locator('.card-body .card-text');
-
-
-
-
   }
 
-async goto() {
-  await this.page.goto('/#/products');
-  await this.productNames.first().waitFor();
-}
+   productCards(): Locator {
+    return this.page.locator('[data-test^="product-"]');
+  }
 
+   async expectResultsVisible() {
+    await expect(this.productCards().first()).toBeVisible();
+  }
 
+   async expectResultsCountGreaterThanZero() {
+   const count = await this.productCards().count();
+   expect(count).toBeGreaterThan(0);
+  }
+
+  async goto() {
+    await this.page.goto('/#/products');
+    await this.productNames.first().waitFor();
+    await this.waitForProductsLoaded();
+    await expect(this.page.getByRole('heading', { name: 'Filters', exact: true })).toBeVisible();
+  }
+
+ async waitForProductsLoaded() {
+    await expect(this.productCards().first()).toBeVisible();
+  }
+
+async expectAllProductsContain(text: string) {
+    const products = this.page.locator('a[href^="/product/"]');
+    const count = await products.count();
+
+    for (let i = 0; i < count; i++) {
+      await expect(products.nth(i)).toContainText(text);
+    }
+  }
 
 async sortByNameAZ() {
   await this.sortSelect.selectOption({ label: 'Name (A - Z)' });
@@ -67,7 +93,5 @@ async sortByPriceHighToLow() {
   // Wait for UI to react
   await this.productNames.first().waitFor();
 }
-
-
   
 }

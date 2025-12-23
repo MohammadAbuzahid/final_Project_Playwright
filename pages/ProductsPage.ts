@@ -6,16 +6,23 @@ export class ProductsPage {
   readonly sortSelect: Locator;
   readonly productNames: Locator;
   readonly productPrices: Locator;
+  readonly searchInput: Locator;
+
 
   constructor(page: Page) {
     this.page = page;
+    this.searchInput = page.getByPlaceholder('Search');
 
-    // Sort dropdown (this is the real one on the site)
+    // Sort dropdown 
     this.sortSelect = page.locator('select.form-select');
 
     // Products
     this.productNames = page.locator('.card-title');
-    this.productPrices = page.locator('.card-text >> nth=1');
+    this.productPrices = page.locator('.card-body .card-text');
+
+
+
+
   }
 
 async goto() {
@@ -36,13 +43,31 @@ async sortByPriceHighToLow() {
 }
 
   async getProductNames(): Promise<string[]> {
-    return await this.productNames.allTextContents();
+    return (await this.productNames.allTextContents())
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
   }
 
   async getProductPrices(): Promise<number[]> {
-    const pricesText = await this.productPrices.allTextContents();
-    return pricesText.map(p =>
-      Number(p.replace('$', '').trim())
-    );
+  const texts = await this.productPrices.allTextContents();
+
+  return texts
+    .map(t => t.replace('$', '').trim())
+    .filter(t => t !== '')
+    .map(Number)
+    .filter(n => !isNaN(n));
   }
+
+  async searchFor(keyword: string) {
+  const searchInput = this.page.locator('input[placeholder="Search"]');
+  await searchInput.fill('');
+  await searchInput.fill(keyword);
+  await searchInput.press('Enter');
+
+  // Wait for UI to react
+  await this.productNames.first().waitFor();
+}
+
+
+  
 }

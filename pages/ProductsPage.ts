@@ -3,31 +3,37 @@ import { Page, Locator } from '@playwright/test';
 export class ProductsPage {
   readonly page: Page;
 
-  readonly sortDropdown: Locator;
+  readonly sortSelect: Locator;
   readonly productNames: Locator;
   readonly productPrices: Locator;
-  readonly searchInput: Locator;
 
   constructor(page: Page) {
     this.page = page;
 
-    this.sortDropdown = page.locator('select[name="sort"]');
+    // Sort dropdown (this is the real one on the site)
+    this.sortSelect = page.locator('select.form-select');
+
+    // Products
     this.productNames = page.locator('.card-title');
     this.productPrices = page.locator('.card-text >> nth=1');
-    this.searchInput = page.locator('input[placeholder="Search"]');
   }
 
-  async goto() {
-    await this.page.goto('/');
-  }
+async goto() {
+  await this.page.goto('/#/products');
+  await this.productNames.first().waitFor();
+}
 
-  async sortByNameAZ() {
-    await this.sortDropdown.selectOption('name-asc');
-  }
 
-  async sortByPriceHighToLow() {
-    await this.sortDropdown.selectOption('price-desc');
-  }
+
+async sortByNameAZ() {
+  await this.sortSelect.selectOption({ label: 'Name (A - Z)' });
+  await this.productNames.first().waitFor();
+}
+
+async sortByPriceHighToLow() {
+  await this.sortSelect.selectOption({ label: 'Price (High - Low)' });
+  await this.productNames.first().waitFor();
+}
 
   async getProductNames(): Promise<string[]> {
     return await this.productNames.allTextContents();
@@ -38,10 +44,5 @@ export class ProductsPage {
     return pricesText.map(p =>
       Number(p.replace('$', '').trim())
     );
-  }
-
-  async searchFor(keyword: string) {
-    await this.searchInput.fill(keyword);
-    await this.searchInput.press('Enter');
   }
 }

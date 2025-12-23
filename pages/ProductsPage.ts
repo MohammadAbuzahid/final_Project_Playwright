@@ -40,7 +40,6 @@ export class ProductsPage {
 
   async goto() {
     await this.page.goto('/');
-    await this.productNames.first().waitFor();
     await this.waitForProductsLoaded();
     await expect(this.page.getByRole('heading', { name: 'Filters', exact: true })).toBeVisible();
   }

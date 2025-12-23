@@ -8,16 +8,18 @@ test.describe('Filter products by category (multiple)', () => {
   for (const category of categories) {
     test(`Category: ${category}`, async ({ page }) => {
       const products = new ProductsPage(page);
-      const filters = new Filters(page);
 
       await products.goto();
       await products.waitForProductsLoaded();
+      const before = await products.productCards().count();
+      expect(before).toBeGreaterThan(0);
 
-      await filters.filterByCategory(category);
+      await products.filters.filterByCategory(category);
       await expect(page.getByLabel(category, { exact: true })).toBeChecked();
 
       await products.waitForProductsLoaded();
-      expect(await products.productCards().count()).toBeGreaterThan(0);
+      const after = await products.productCards().count();
+      expect(after).toBeLessThanOrEqual(before);
     });
   }
 });

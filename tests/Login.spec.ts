@@ -91,8 +91,8 @@ test.describe('Login Tests Suite', () => {
         await page.waitForTimeout(1000);
         await page.locator('[data-test="login-submit"]').click();
         await page.waitForTimeout(1000);
-        expect(page.locator('[data-test="login-error"]')).toBeVisible();
-        expect(page.locator('[data-test="login-error"]')).toContainText('Invalid email or password');
+        expect(page.locator('[data-test="email-error"]')).toBeVisible();
+        expect(page.locator('[data-test="email-error"]')).toContainText('Email format is invalid');
     });
 
     test('go to register page ', async ({ page }) => {
